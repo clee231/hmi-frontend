@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Provides HMI Frontend functionality for ANL CCDC 2017.
+ */
+
+
+function hmi_frontend_mainpage() {
+  return array('#markup' => '<p>' .  t('Simple page: The quick brown fox jumps over the lazy dog.') . '</p>');
+}
+
+
+function hmi_frontend_menu() {
+  $items['acme/hmi'] = array(
+    'page callback' => 'hmi_frontend_mainpage',
+    'access callback' => true,
+  );
+  return $items;
+}
+
+/* vim: set tabstop=2:softtabstop=2:shiftwidth=2:expandtab */ 
+?>

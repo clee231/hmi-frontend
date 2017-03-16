@@ -1,0 +1,5 @@
+name = HMI Frontend
+description = HMI Frontend for the ANL CCDC 2017
+core = 7.x
+stylesheets[all][] = hmi-style.css
+package = UIC Fortress
