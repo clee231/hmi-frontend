@@ -10,11 +10,88 @@ function hmi_frontend_mainpage() {
   return array('#markup' => '<p>' .  t('Simple page: The quick brown fox jumps over the lazy dog.') . '</p>');
 }
 
+/**
+ * Handles rendering of the HMI Controls for admins
+ */
+function hmi_frontend_admin_form($form, &$form_state) {
+  $form['statusTagline'] = array(
+    '#markup' => '<p>This status page is for our valued customers to see the status of our water and power systems</p>'
+  );
+  $form['status_water'] = array(
+    '#markup' => '<p>Water systems are operating at FAKE efficiency</p>'
+  );
+  $form['status_power'] = array(
+    '#markup' => '<p>Power systems are operating at FAKE efficiency</p>'
+  );
 
+  $form['water_group'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Water')
+  );
+
+  $form['water_on'] = array(
+    '#type' => 'submit',
+    '#name' => 'water_on',
+    '#value' => t('Water On')
+  );
+  $form['water_off'] = array(
+    '#type' => 'button',
+    '#value' => t('Water Off')
+  );
+
+  $form['power_on'] = array(
+    '#type' => 'button',
+    '#value' => t('Power On')
+  );
+  $form['power_off'] = array(
+    '#type' => 'button',
+    '#value' => t('Power Off')
+  );
+
+  $form['kill'] = array(
+    '#type' => 'button',
+    '#value' => t('Kill Switch')
+  );
+  drupal_set_message(t('The form has NOT been submitted.'));
+  return $form;
+}
+
+function hmi_frontend_admin_form_validate($form, &$form_state) {
+  
+}
+
+
+function hmi_frontend_admin_form_submit($form, &$form_state) {
+  if ($form_state['clicked_button']['#name'] == 'water_on') {
+  drupal_set_message(t('Creating water-on request'));
+  $request_data['timestamp'] = time();
+  $request_data['command'] = "on";
+  $request_data['type'] = "water";
+  dpm(json_encode($request_data));
+  $keypath =  drupal_get_path('module', 'hmi_frontend') . '/' . 'ccdc.pub.pem';
+  $key = file_get_contents($keypath);
+  $encrypt = "";
+  $estatus = openssl_public_encrypt(json_encode($request_data), $encrypt, $key);
+  dpm(base64_encode($encrypt));
+  }
+  drupal_set_message(t('The form has been submitted.'));
+}
+
+
+/**
+ * Implement hook_menu()
+ */
 function hmi_frontend_menu() {
-  $items['acme/hmi'] = array(
+  $items['hmi2'] = array(
     'page callback' => 'hmi_frontend_mainpage',
     'access callback' => true,
+  );
+  $items['hmi2/admin'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hmi_frontend_admin_form'),
+    'access callback' => true,
+    'access arguments' => true,
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }
