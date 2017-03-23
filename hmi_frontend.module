@@ -35,20 +35,24 @@ function hmi_frontend_admin_form($form, &$form_state) {
     '#value' => t('Water On')
   );
   $form['water_group']['water_off'] = array(
-    '#type' => 'button',
+    '#type' => 'submit',
+    '#name' => 'water_off',
     '#value' => t('Water Off')
   );
 
   $form['power_group'] = array(
     '#type' => 'fieldset',
+    '#name' => 'power_on',
     '#title' => t('Power')
   );
   $form['power_group']['power_on'] = array(
-    '#type' => 'button',
+    '#type' => 'submit',
+    '#name' => 'power_on',
     '#value' => t('Power On')
   );
   $form['power_group']['power_off'] = array(
-    '#type' => 'button',
+    '#type' => 'submit',
+    '#name' => 'power_off',
     '#value' => t('Power Off')
   );
 
@@ -57,14 +61,15 @@ function hmi_frontend_admin_form($form, &$form_state) {
     '#title' => t('Kill')
   );
   $form['kill_group']['kill'] = array(
-    '#type' => 'button',
+    '#type' => 'submit',
+    '#name' => 'kill_switch',
     '#value' => t('Kill Switch')
   );
   return $form;
 }
 
 function hmi_frontend_admin_form_validate($form, &$form_state) {
-  $options = array('water_on', 'water_off', 'power_on', 'power_off', 'kill');
+  $options = array('water_on', 'water_off', 'power_on', 'power_off', 'kill_switch');
   if (!in_array($form_state['clicked_button']['#name'], $options)) {
     form_set_error(NULL, "An invalid command was submitted. Please try another command.");
   }
@@ -91,9 +96,13 @@ function hmi_frontend_admin_form_submit($form, &$form_state) {
   else if ($form_state['clicked_button']['#name'] == 'power_off') {
     $request_data['command'] = "off";
     $request_data['type'] = "power";
-    drupal_set_message(t('"Power On" command has been submitted to the HMI.'));
+    drupal_set_message(t('"Power Off" command has been submitted to the HMI.'));
   }
-
+  else if ($form_state['clicked_button']['#name'] == 'kill_switch') {
+    $request_data['command'] = "off";
+    $request_data['type'] = "all";
+    drupal_set_message(t('"Kill Switch" command has been submitted to the HMI.'));
+  }
   $key = variable_get('hmi_pkey');
   $encrypt = "";
   $estatus = openssl_public_encrypt(json_encode($request_data), $encrypt, $key);
