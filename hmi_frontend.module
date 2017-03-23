@@ -29,52 +29,85 @@ function hmi_frontend_admin_form($form, &$form_state) {
     '#title' => t('Water')
   );
 
-  $form['water_on'] = array(
+  $form['water_group']['water_on'] = array(
     '#type' => 'submit',
     '#name' => 'water_on',
     '#value' => t('Water On')
   );
-  $form['water_off'] = array(
+  $form['water_group']['water_off'] = array(
     '#type' => 'button',
     '#value' => t('Water Off')
   );
 
-  $form['power_on'] = array(
+  $form['power_group'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Power')
+  );
+  $form['power_group']['power_on'] = array(
     '#type' => 'button',
     '#value' => t('Power On')
   );
-  $form['power_off'] = array(
+  $form['power_group']['power_off'] = array(
     '#type' => 'button',
     '#value' => t('Power Off')
   );
 
-  $form['kill'] = array(
+  $form['kill_group'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Kill')
+  );
+  $form['kill_group']['kill'] = array(
     '#type' => 'button',
     '#value' => t('Kill Switch')
   );
-  drupal_set_message(t('The form has NOT been submitted.'));
   return $form;
 }
 
 function hmi_frontend_admin_form_validate($form, &$form_state) {
-  
+  $options = array('water_on', 'water_off', 'power_on', 'power_off', 'kill');
+  if (!in_array($form_state['clicked_button']['#name'], $options)) {
+    form_set_error(NULL, "An invalid command was submitted. Please try another command.");
+  }
 }
 
 
 function hmi_frontend_admin_form_submit($form, &$form_state) {
-  if ($form_state['clicked_button']['#name'] == 'water_on') {
-  drupal_set_message(t('Creating water-on request'));
   $request_data['timestamp'] = time();
-  $request_data['command'] = "on";
-  $request_data['type'] = "water";
-  dpm(json_encode($request_data));
-  $keypath =  drupal_get_path('module', 'hmi_frontend') . '/' . 'ccdc.pub.pem';
-  $key = file_get_contents($keypath);
+  if ($form_state['clicked_button']['#name'] == 'water_on') {
+    $request_data['command'] = "on";
+    $request_data['type'] = "water";
+    drupal_set_message(t('"Water On" command has been submitted to the HMI.'));
+  } 
+  else if ($form_state['clicked_button']['#name'] == 'water_off') {
+    $request_data['command'] = "off";
+    $request_data['type'] = "water";
+    drupal_set_message(t('"Water Off" command has been submitted to the HMI.'));
+  }
+  else if ($form_state['clicked_button']['#name'] == 'power_on') {
+    $request_data['command'] = "on";
+    $request_data['type'] = "power";
+    drupal_set_message(t('"Power On" command has been submitted to the HMI.'));
+  }
+  else if ($form_state['clicked_button']['#name'] == 'power_off') {
+    $request_data['command'] = "off";
+    $request_data['type'] = "power";
+    drupal_set_message(t('"Power On" command has been submitted to the HMI.'));
+  }
+
+  $key = variable_get('hmi_pkey');
   $encrypt = "";
   $estatus = openssl_public_encrypt(json_encode($request_data), $encrypt, $key);
-  dpm(base64_encode($encrypt));
-  }
-  drupal_set_message(t('The form has been submitted.'));
+  $url = variable_get('hmi_url');
+  $ch = curl_init($url);
+  $dataprep = array(
+    'data' => base64_encode($encrypt)
+  );
+  $postData = http_build_query($dataprep, '', '&');
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  $response = curl_exec($ch);
+  curl_close($ch);
 }
 
 
@@ -89,11 +122,73 @@ function hmi_frontend_menu() {
   $items['hmi2/admin'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('hmi_frontend_admin_form'),
-    'access callback' => true,
-    'access arguments' => true,
+    'access arguments' => array('control hmi'),
     'type' => MENU_CALLBACK,
   );
+  $items['admin/config/hmi'] = array(
+    'title' => 'HMI',
+    'description' => 'HMI settings - ANL CCDC 2017',
+    'position' => 'right',
+    'weight' => -15,
+    'page_callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer hmi'),
+  );
+
+  $items['admin/config/hmi/settings'] = array(
+    'title' => 'HMI Frontend Settings',
+    'description' => 'Manage HMI Frontend Configuration settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hmi_frontend_system_settings_form'),
+    'access arguments' => array('administer hmi'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   return $items;
+}
+
+/**
+ * Implement hook_system_settings_form()
+ */
+function hmi_frontend_system_settings_form() {
+  $form = array();
+
+  $form['hmi_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('HMI URL'),
+    '#default_value' => variable_get('hmi_url', 'http://127.0.0.1/hmi')
+  );
+  $form['hmi_pkey'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Public Key'),
+    '#default_value' => variable_get('hmi_pkey', '<Public Encryption Key goes here>')
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Implement hook_permission()
+ */
+function hmi_frontend_permission() {
+  $perm = array(
+    'administer hmi' => array(
+      'title' => t('Administer HMI'),
+      'restrict access' => TRUE,
+      'description' => t('Allow user to modify how the HMI frontend will communicate with servers.'),
+    ),
+    'control hmi' => array(
+      'title' => t('Control HMI'),
+      'description' => t('Allow user to control the HMI.'),
+    ),
+  );
+  return $perm;
+}
+
+
+/**
+ * Implement hook_uninstall()
+ */
+function hmi_frontend_uninstall() {
+  variable_del('hmi_url');
+  variable_del('hmi_pkey');
 }
 
 /* vim: set tabstop=2:softtabstop=2:shiftwidth=2:expandtab */ 
