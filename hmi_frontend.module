@@ -116,6 +116,7 @@ function hmi_frontend_admin_form_submit($form, &$form_state) {
   curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
   $response = curl_exec($ch);
+  dpm($response);
   curl_close($ch);
 }
 
