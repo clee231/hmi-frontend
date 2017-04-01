@@ -121,26 +121,31 @@ function hmi_frontend_admin_form_submit($form, &$form_state) {
     $request_data['command'] = "on";
     $request_data['type'] = "water";
     drupal_set_message(t('"Water On" command has been submitted to the HMI.'));
+    watchdog("HMI", "Water ON");
   } 
   else if ($form_state['clicked_button']['#name'] == 'water_off') {
     $request_data['command'] = "off";
     $request_data['type'] = "water";
     drupal_set_message(t('"Water Off" command has been submitted to the HMI.'));
+    watchdog("HMI", "Water OFF");
   }
   else if ($form_state['clicked_button']['#name'] == 'power_on') {
     $request_data['command'] = "on";
     $request_data['type'] = "power";
     drupal_set_message(t('"Power On" command has been submitted to the HMI.'));
+    watchdog("HMI", "Power ON");
   }
   else if ($form_state['clicked_button']['#name'] == 'power_off') {
     $request_data['command'] = "off";
     $request_data['type'] = "power";
     drupal_set_message(t('"Power Off" command has been submitted to the HMI.'));
+    watchdog("HMI", "Water OFF");
   }
   else if ($form_state['clicked_button']['#name'] == 'kill_switch') {
     $request_data['command'] = "off";
     $request_data['type'] = "all";
     drupal_set_message(t('"Kill Switch" command has been submitted to the HMI.'));
+    watchdog("HMI", "Kill Switch");
   }
   $key = variable_get('hmi_pkey');
   $encrypt = "";
