@@ -38,7 +38,7 @@ function hmi_frontend_admin_form($form, &$form_state) {
 
 
   $form['status_group']['statusTagline'] = array(
-    '#markup' => '<p>This status page is for our valued customers to see the status of our water and power systems</p><h1>Water will be shut off until 4/1/2017 11:09 AM</h1>'
+    '#markup' => '<p>This status page is for our valued customers to see the status of our water and power systems</p>'
   );
 if ($respobj['water'] == true) { // ON
   $form['status_group']['status_water'] = array(
